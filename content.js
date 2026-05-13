@@ -19,9 +19,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 let floatingEl = null;
+let selectedText = '';
 
 function showFloatingUI(state, text) {
   removeFloatingUI();
+  selectedText = text || '';
   floatingEl = document.createElement('div');
   floatingEl.id = 'writeflow-floating';
   floatingEl.style.cssText = `
@@ -47,30 +49,63 @@ function updateFloatingUI(state, content, score) {
   if (state === 'error') {
     floatingEl.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-        <span style="color:#dc2626;font-weight:600;">❌ Error</span>
+        <span style="color:#dc2626;font-weight:600;">Error</span>
       </div>
-      <div style="font-size:12px;color:#dc2626;">${content}</div>
+      <div style="font-size:12px;color:#dc2626;">${escapeHtml(content)}</div>
     `;
   } else {
     floatingEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="color:#10B981;font-weight:600;">✅ Rewritten</span>
+        <span style="color:#10B981;font-weight:600;">Rewritten</span>
         ${score !== undefined ? `<span style="font-size:11px;color:#10B981;font-weight:600;">Score: ${score}%</span>` : ''}
       </div>
       <div style="font-size:13px;line-height:1.5;color:#334155;white-space:pre-wrap;margin-bottom:8px;">${escapeHtml(content)}</div>
       <div style="display:flex;gap:6px;justify-content:flex-end;">
-        <button id="wf-copy-btn" style="padding:4px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;color:#475569;cursor:pointer;">📋 Copy</button>
-        <button id="wf-close-btn" style="padding:4px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;color:#475569;cursor:pointer;">✕ Close</button>
+        <button id="wf-copy-btn" style="padding:4px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;color:#475569;cursor:pointer;">Copy</button>
+        <button id="wf-replace-btn" style="padding:4px 10px;font-size:11px;border:1px solid #10B981;border-radius:4px;background:#10B981;color:#fff;cursor:pointer;">Replace</button>
+        <button id="wf-close-btn" style="padding:4px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;color:#475569;cursor:pointer;">Close</button>
       </div>
     `;
     document.getElementById('wf-copy-btn').addEventListener('click', () => {
       navigator.clipboard.writeText(content).then(() => {
-        document.getElementById('wf-copy-btn').textContent = '✅ Copied';
+        document.getElementById('wf-copy-btn').textContent = 'Copied';
       });
+    });
+    document.getElementById('wf-replace-btn').addEventListener('click', () => {
+      replaceSelection(content);
     });
     document.getElementById('wf-close-btn').addEventListener('click', removeFloatingUI);
   }
-  setTimeout(removeFloatingUI, 30000);
+  // No auto-close - user manually clicks Close
+}
+
+function replaceSelection(text) {
+  try {
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'INPUT')) {
+      activeEl.focus();
+      document.execCommand('insertText', false, text);
+    } else {
+      // Try to find a selection and replace it
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(document.createTextNode(text));
+        sel.removeAllRanges();
+      }
+    }
+    document.getElementById('wf-replace-btn').textContent = 'Replaced';
+    setTimeout(() => {
+      const btn = document.getElementById('wf-replace-btn');
+      if (btn) btn.textContent = 'Replace';
+    }, 2000);
+  } catch (e) {
+    // Fallback: copy to clipboard
+    navigator.clipboard.writeText(text);
+    const btn = document.getElementById('wf-replace-btn');
+    if (btn) btn.textContent = 'Copied (replace failed)';
+  }
 }
 
 function removeFloatingUI() {

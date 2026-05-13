@@ -10,15 +10,44 @@ function init() {
   const clearBtn = document.getElementById('clearBtn');
   const copyBtn = document.getElementById('copyBtn');
   const openOptions = document.getElementById('openOptions');
+  const upgradeModal = document.getElementById('upgradeModal');
+  const getProBtn = document.getElementById('getProBtn');
+  const upgradeCloseBtn = document.getElementById('upgradeCloseBtn');
+  const useOwnKey = document.getElementById('useOwnKey');
   const modeBtns = document.querySelectorAll('.mode-btn');
 
-  chrome.storage.local.get(['apiKey', 'history'], (data) => {
-    if (!data.apiKey) {
-      document.getElementById('noApiKey').classList.remove('hidden');
-      rewriteBtn.disabled = true;
-    } else if (inputText.value.trim()) {
-      rewriteBtn.disabled = false;
+  // Check usage and pro status
+  updateUsageDisplay();
+  checkRewriteLimit(rewriteBtn, upgradeModal);
+
+  // Auto-fill selected text from active tab
+  chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    if (tabs[0] && tabs[0].id) {
+      chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        func: () => window.getSelection().toString()
+      }, results => {
+        if (results && results[0] && results[0].result) {
+          const selected = results[0].result.trim();
+          if (selected && selected.length <= MAX_CHARS) {
+            inputText.value = selected;
+            inputText.dispatchEvent(new Event('input'));
+          }
+        }
+      });
     }
+    // Restore saved mode
+    chrome.storage.local.get('lastMode', data => {
+      if (data.lastMode) {
+        modeBtns.forEach(b => b.classList.remove('active'));
+        const savedBtn = document.querySelector(`.mode-btn[data-mode="${data.lastMode}"]`);
+        if (savedBtn) savedBtn.classList.add('active');
+      }
+    });
+  });
+
+  // Check API key and enable button
+  chrome.storage.local.get(['apiKey', 'history'], data => {
     if (data.history && data.history.length > 0) {
       renderHistory(data.history);
     }
@@ -27,8 +56,11 @@ function init() {
   inputText.addEventListener('input', () => {
     const len = inputText.value.length;
     document.getElementById('charCount').textContent = `${len} / ${MAX_CHARS}`;
-    chrome.storage.local.get('apiKey', (d) => {
-      rewriteBtn.disabled = !d.apiKey || !inputText.value.trim();
+    chrome.runtime.sendMessage({ action: 'getUsage' }, resp => {
+      if (resp) {
+        const canRewrite = resp.isPro || resp.usingBuiltIn ? resp.usage < resp.limit && !!resp.usingBuiltIn : true;
+        rewriteBtn.disabled = !inputText.value.trim();
+      }
     });
   });
 
@@ -36,6 +68,8 @@ function init() {
     btn.addEventListener('click', () => {
       modeBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      // Save mode to storage (Issue #3 item 6)
+      chrome.runtime.sendMessage({ action: 'saveMode', mode: btn.dataset.mode });
     });
   });
 
@@ -43,6 +77,47 @@ function init() {
   clearBtn.addEventListener('click', () => { inputText.value = ''; inputText.dispatchEvent(new Event('input')); });
   copyBtn.addEventListener('click', copyResult);
   openOptions.addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
+
+  // Upgrade modal handlers
+  getProBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'getGumroadUrl' }, resp => {
+      if (resp && resp.url) {
+        chrome.tabs.create({ url: resp.url });
+      }
+    });
+  });
+  upgradeCloseBtn.addEventListener('click', () => {
+    upgradeModal.classList.add('hidden');
+  });
+  useOwnKey.addEventListener('click', (e) => {
+    e.preventDefault();
+    chrome.runtime.openOptionsPage();
+  });
+}
+
+async function checkRewriteLimit(rewriteBtn, upgradeModal) {
+  try {
+    const resp = await chrome.runtime.sendMessage({ action: 'getUsage' });
+    if (resp && !resp.isPro && resp.usingBuiltIn && resp.usage >= resp.limit) {
+      rewriteBtn.classList.add('hidden');
+      upgradeModal.classList.remove('hidden');
+    }
+  } catch (e) {
+    // Ignore errors - button stays enabled
+  }
+}
+
+async function updateUsageDisplay() {
+  try {
+    const resp = await chrome.runtime.sendMessage({ action: 'getUsage' });
+    if (resp && resp.usingBuiltIn && !resp.isPro) {
+      document.getElementById('usageBadge').classList.remove('hidden');
+      document.getElementById('usageCount').textContent = resp.usage;
+      document.getElementById('usageLimit').textContent = resp.limit;
+    }
+  } catch (e) {
+    // Ignore errors
+  }
 }
 
 async function doRewrite() {
@@ -55,6 +130,7 @@ async function doRewrite() {
   const scoreBar = document.getElementById('scoreBar');
   const btnText = document.getElementById('btnText');
   const btnSpinner = document.getElementById('btnSpinner');
+  const upgradeModal = document.getElementById('upgradeModal');
 
   errorMsg.classList.add('hidden');
   resultSection.classList.add('hidden');
@@ -69,6 +145,12 @@ async function doRewrite() {
       text: inputText,
       mode: activeMode
     });
+
+    if (response.error === 'FREE_LIMIT' || response.error === 'FREE_LIMIT_UPSELL') {
+      rewriteBtn.classList.add('hidden');
+      upgradeModal.classList.remove('hidden');
+      return;
+    }
 
     if (response.error) {
       errorMsg.textContent = response.error;
@@ -85,6 +167,7 @@ async function doRewrite() {
     scoreBar.classList.remove('hidden');
 
     saveHistory(inputText, response.rewritten, activeMode);
+    await updateUsageDisplay();
   } catch (err) {
     errorMsg.textContent = `Error: ${err.message || 'Failed to rewrite'}`;
     errorMsg.classList.remove('hidden');
@@ -92,6 +175,8 @@ async function doRewrite() {
     rewriteBtn.disabled = false;
     btnText.classList.remove('hidden');
     btnSpinner.classList.add('hidden');
+    // Re-check limit after rewrite
+    await checkRewriteLimit(rewriteBtn, upgradeModal);
   }
 }
 

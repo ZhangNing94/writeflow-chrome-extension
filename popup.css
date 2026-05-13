@@ -5,6 +5,8 @@ body { width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
 .logo { font-size: 20px; font-weight: 700; color: #10B981; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .logo-icon { background: #10B981; color: #fff; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; }
 .tagline { font-size: 11px; color: #64748b; margin-top: 2px; }
+.usage-counter { font-size: 10px; color: #64748b; margin-top: 4px; }
+.usage-counter span { font-weight: 600; color: #10B981; }
 .api-key-warning { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 11px; color: #92400e; }
 .api-key-warning a { color: #10B981; font-weight: 600; text-decoration: none; }
 .input-section { margin-bottom: 8px; }
@@ -49,3 +51,18 @@ textarea:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129,
 .history-item { padding: 4px 0; border-bottom: 1px solid #f1f5f9; font-size: 11px; color: #475569; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .history-item:hover { color: #10B981; }
 .history-item .mode-tag { display: inline-block; background: #ecfdf5; color: #059669; font-size: 9px; padding: 1px 4px; border-radius: 3px; margin-right: 4px; }
+
+/* Upgrade Modal */
+.upgrade-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 999999; }
+.upgrade-content { background: #fff; border-radius: 12px; padding: 20px; max-width: 280px; text-align: center; margin: 12px; }
+.upgrade-title { font-size: 18px; font-weight: 700; color: #10B981; margin-bottom: 8px; }
+.upgrade-subtitle { font-size: 13px; color: #64748b; margin-bottom: 16px; }
+.upgrade-features { text-align: left; margin-bottom: 16px; }
+.upgrade-feature { font-size: 12px; color: #334155; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.upgrade-feature::before { content: "✓"; color: #10B981; font-weight: 600; }
+.upgrade-price { font-size: 24px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+.upgrade-price small { font-size: 13px; font-weight: 400; color: #64748b; }
+.upgrade-btn { width: 100%; padding: 12px; background: #10B981; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 8px; font-family: inherit; }
+.upgrade-btn:hover { background: #059669; }
+.upgrade-btn-outline { width: 100%; padding: 10px; background: #fff; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; }
+.upgrade-btn-outline:hover { border-color: #10B981; color: #10B981; }

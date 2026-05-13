@@ -10,16 +10,38 @@
   <div class="container">
     <header class="header">
       <h1 class="logo"><span class="logo-icon">W</span> WriteFlow</h1>
-      <p class="tagline">Free unlimited AI rewrites</p>
+      <p class="tagline">AI-powered rewriting assistant</p>
+      <div id="usageBadge" class="usage-counter hidden">
+        Free rewrites: <span id="usageCount">0</span>/<span id="usageLimit">3</span> today
+      </div>
     </header>
+
+    <!-- Upgrade Modal -->
+    <div id="upgradeModal" class="upgrade-modal hidden">
+      <div class="upgrade-content">
+        <div class="upgrade-title">Unlock Unlimited Rewrites</div>
+        <div class="upgrade-subtitle">You've used all 3 free rewrites today. Upgrade to Pro for unlimited access.</div>
+        <div class="upgrade-features">
+          <div class="upgrade-feature">Unlimited rewrites, no daily cap</div>
+          <div class="upgrade-feature">All 4 modes (Formal, Simple, Creative, Academic)</div>
+          <div class="upgrade-feature">Right-click rewrite on any page</div>
+          <div class="upgrade-feature">One-time purchase, no subscription</div>
+        </div>
+        <div class="upgrade-price">$4.99 <small>one-time</small></div>
+        <button id="getProBtn" class="upgrade-btn">Get Pro - $4.99</button>
+        <button id="useOwnKey" class="upgrade-btn-outline">Use your own API key</button>
+        <button id="upgradeCloseBtn" class="upgrade-btn-outline" style="margin-top:4px;">Not now</button>
+      </div>
+    </div>
+
     <div id="noApiKey" class="api-key-warning hidden">
-      <p>⚠️ Please set your DeepSeek API Key in <a href="#" id="openOptions">Settings</a></p>
+      <p>Please set your DeepSeek API Key in <a href="#" id="openOptions">Settings</a></p>
     </div>
     <div class="input-section">
       <textarea id="inputText" placeholder="Paste or type your text here..." rows="4"></textarea>
       <div class="input-footer">
         <span id="charCount" class="char-count">0 / 2000</span>
-        <button id="clearBtn" class="btn-icon" title="Clear">✕</button>
+        <button id="clearBtn" class="btn-icon" title="Clear">x</button>
       </div>
     </div>
     <div class="mode-section">
@@ -31,7 +53,7 @@
         <button class="mode-btn" data-mode="Academic">Academic</button>
       </div>
     </div>
-    <button id="rewriteBtn" class="primary-btn" disabled>
+    <button id="rewriteBtn" class="primary-btn">
       <span id="btnText">Rewrite</span>
       <span id="btnSpinner" class="spinner hidden">
         <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
@@ -42,7 +64,7 @@
       <div class="result-header">
         <span class="result-label">Rewritten Text</span>
         <div class="result-actions">
-          <button id="copyBtn" class="btn-sm" title="Copy">📋 Copy</button>
+          <button id="copyBtn" class="btn-sm" title="Copy">Copy</button>
         </div>
       </div>
       <div id="resultText" class="result-text"></div>

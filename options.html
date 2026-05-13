@@ -13,9 +13,10 @@
     .desc { font-size: 13px; color: #64748b; }
     .section { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
     .section-title { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 10px; }
+    .pro-badge { display: inline-block; background: #ecfdf5; color: #059669; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-left: 8px; }
     label { display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 500; }
-    input[type="password"] { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; outline: none; font-family: monospace; letter-spacing: 0.5px; }
-    input[type="password"]:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+    input[type="password"], input[type="text"] { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; outline: none; font-family: monospace; letter-spacing: 0.5px; }
+    input[type="password"]:focus, input[type="text"]:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
     .hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
     .btn-row { display: flex; gap: 8px; margin-top: 12px; }
     .btn-primary { padding: 8px 20px; background: #10B981; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -27,15 +28,33 @@
     .status.error { display: block; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
     .how-to { font-size: 12px; color: #64748b; margin-top: 8px; }
     .how-to a { color: #10B981; }
+    .pro-info { font-size: 12px; color: #64748b; margin-bottom: 8px; }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="logo"><span class="logo-icon">W</span> WriteFlow Settings</div>
-    <p class="desc">Configure your DeepSeek API Key for unlimited AI rewrites</p>
+    <div class="logo"><span class="logo-icon">W</span> WriteFlow Settings<span id="proBadge" class="pro-badge hidden">PRO</span></div>
+    <p class="desc">Configure WriteFlow - install-and-use with built-in AI or bring your own key</p>
   </div>
+
+  <!-- Pro License Section -->
+  <div id="proSection" class="section">
+    <div class="section-title">Pro License</div>
+    <p class="pro-info" id="proStatusText">Free plan: 3 rewrites/day. Upgrade for unlimited access.</p>
+    <label for="licenseCode">License Code (6-digit PIN)</label>
+    <input type="text" id="licenseCode" placeholder="Enter 6-digit code" maxlength="6" autocomplete="off">
+    <p class="hint">Purchase from <a href="https://zhangning94.gumroad.com/l/writeflow-pro" target="_blank">Gumroad</a> to get your license code</p>
+    <div class="btn-row">
+      <button id="verifyBtn" class="btn-primary">Activate Pro</button>
+      <button id="buyBtn" class="btn-secondary">Buy Pro - $4.99</button>
+    </div>
+    <div id="licenseStatus" class="status"></div>
+  </div>
+
+  <!-- BYOK Section -->
   <div class="section">
-    <div class="section-title">API Configuration</div>
+    <div class="section-title">Bring Your Own API Key (Optional)</div>
+    <p class="pro-info">Skip daily limits by using your own DeepSeek API key. Only appears here — never interrupts normal use.</p>
     <label for="apiKey">DeepSeek API Key</label>
     <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
     <p class="hint">Your key starts with "sk-" and is stored locally. Get one at <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a></p>
@@ -45,14 +64,16 @@
     </div>
     <div id="statusMsg" class="status"></div>
   </div>
+
   <div class="section">
     <div class="section-title">How It Works</div>
     <p class="how-to">
-      1. Get a free DeepSeek API Key from <a href="https://platform.deepseek.com/api_keys" target="_blank">DeepSeek Platform</a><br>
-      2. Paste your key (starts with "sk-") above and save<br>
-      3. Select text on any page, right-click → "Rewrite with WriteFlow"<br>
-      4. Or click the WriteFlow icon to open the popup<br>
-      5. All data is processed locally; your key never leaves your browser
+      1. Install WriteFlow — works immediately with built-in AI<br>
+      2. Free plan: 3 rewrites per day, all 4 modes<br>
+      3. Pro plan: $4.99 one-time for unlimited rewrites<br>
+      4. Or bring your own DeepSeek API Key for free unlimited use<br>
+      5. Select text on any page, right-click &rarr; "Rewrite with WriteFlow"<br>
+      6. All data is processed locally; your key never leaves your browser
     </p>
   </div>
   <script src="options.js"></script>

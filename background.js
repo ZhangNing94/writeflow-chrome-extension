@@ -1,7 +1,100 @@
 // WriteFlow Background Service Worker - background.js
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const FREE_LIMIT = 3;
+const GUMROAD_URL = 'https://zhangning94.gumroad.com/l/writeflow-pro';
 
+// Built-in API Key (XOR+base64 obfuscated) - replace encoded string with real key
+// Generate: run in console -> btoa([...'sk-xxx'].map((c,i)=>String.fromCharCode(c.charCodeAt(0)^'WFLO'.charCodeAt(i%4))).join(''))
+const _EK = 'cGFlb2hvbGRlclo='; // placeholder - REPLACE with encoded real API key
+const _XK = 'WFLO';
+
+function decodeBuiltInKey(ek) {
+  try {
+    const b = Uint8Array.from(atob(ek), c => c.charCodeAt(0));
+    for (let i = 0; i < b.length; i++) b[i] ^= _XK.charCodeAt(i % _XK.length);
+    return new TextDecoder().decode(b);
+  } catch { return null; }
+}
+
+const BUILT_IN_KEY = decodeBuiltInKey(_EK);
+
+// Pre-generated Pro license codes (SHA-256 hashes)
+// Run in console to generate: crypto.subtle.digest('SHA-256', new TextEncoder().encode('CODE')).then(h => Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join(''))
+const VALID_LICENSE_HASHES = [
+  'placeholder_hash_1',  // Replace with real hashes
+  'placeholder_hash_2'
+];
+
+async function hashLicenseCode(code) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(code.trim().toUpperCase());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyLicenseCode(code) {
+  const hash = await hashLicenseCode(code);
+  return VALID_LICENSE_HASHES.includes(hash);
+}
+
+async function getUsageForToday() {
+  return new Promise(resolve => {
+    chrome.storage.local.get(['usageDate', 'usageCount'], data => {
+      const today = new Date().toDateString();
+      if (data.usageDate !== today) resolve(0);
+      else resolve(data.usageCount || 0);
+    });
+  });
+}
+
+async function incrementUsage() {
+  const today = new Date().toDateString();
+  return new Promise(resolve => {
+    chrome.storage.local.get(['usageDate', 'usageCount'], data => {
+      if (data.usageDate !== today) {
+        chrome.storage.local.set({ usageDate: today, usageCount: 1 });
+        resolve(1);
+      } else {
+        const count = (data.usageCount || 0) + 1;
+        chrome.storage.local.set({ usageCount: count });
+        resolve(count);
+      }
+    });
+  });
+}
+
+async function checkProStatus() {
+  return new Promise(resolve => {
+    chrome.storage.local.get('isPro', data => resolve(!!data.isPro));
+  });
+}
+
+async function getEffectiveApiKey() {
+  return new Promise(resolve => {
+    chrome.storage.local.get('apiKey', data => {
+      resolve(data.apiKey || BUILT_IN_KEY);
+    });
+  });
+}
+
+async function isUsingBuiltInKey() {
+  return new Promise(resolve => {
+    chrome.storage.local.get('apiKey', data => resolve(!data.apiKey));
+  });
+}
+
+async function canRewrite() {
+  const isPro = await checkProStatus();
+  if (isPro) return true;
+  const usingBuiltIn = await isUsingBuiltInKey();
+  if (!usingBuiltIn) return true; // BYOK user - unlimited
+  const usage = await getUsageForToday();
+  return usage < FREE_LIMIT;
+}
+
+// Daily reset alarm
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: 'writeflow-rewrite',
@@ -10,21 +103,33 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+// Context menu: use saved mode
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'writeflow-rewrite' && info.selectionText) {
-    chrome.storage.local.get('apiKey', (data) => {
-      if (!data.apiKey) {
+    chrome.storage.local.get(['apiKey', 'lastMode'], async (data) => {
+      if (!await canRewrite()) {
         chrome.tabs.sendMessage(tab.id, {
           action: 'showNotification',
-          message: 'Please set your DeepSeek API Key in WriteFlow settings first.'
+          message: 'Free limit (3/day) reached. Upgrade to Pro for unlimited rewrites.'
         });
         return;
       }
+      const apiKey = data.apiKey || BUILT_IN_KEY;
+      if (!apiKey) {
+        chrome.tabs.sendMessage(tab.id, {
+          action: 'showNotification',
+          message: 'API key not available. Please set your key in Settings.'
+        });
+        return;
+      }
+      const mode = data.lastMode || 'Simple';
+      if (!data.apiKey) await incrementUsage();
+
       chrome.tabs.sendMessage(tab.id, {
         action: 'showRewriting',
         text: info.selectionText
       });
-      rewriteText(info.selectionText, 'Simple', data.apiKey)
+      rewriteText(info.selectionText, mode, apiKey)
         .then(result => {
           chrome.tabs.sendMessage(tab.id, {
             action: 'showRewriteResult',
@@ -44,21 +149,60 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'rewrite') {
-    chrome.storage.local.get('apiKey', async (data) => {
-      if (!data.apiKey) {
-        sendResponse({ error: 'API Key not set. Please open Settings.' });
-        return;
-      }
-      try {
-        const result = await rewriteText(request.text, request.mode, data.apiKey);
-        sendResponse(result);
-      } catch (err) {
-        sendResponse({ error: err.message });
+    handleRewrite(request, sendResponse);
+    return true;
+  }
+  if (request.action === 'getUsage') {
+    getUsageForToday().then(count => {
+      checkProStatus().then(isPro => {
+        isUsingBuiltInKey().then(usingBuiltIn => {
+          sendResponse({ usage: count, limit: FREE_LIMIT, isPro, usingBuiltIn });
+        });
+      });
+    });
+    return true;
+  }
+  if (request.action === 'verifyLicense') {
+    verifyLicenseCode(request.code).then(valid => {
+      if (valid) {
+        chrome.storage.local.set({ isPro: true }, () => {
+          sendResponse({ success: true });
+        });
+      } else {
+        sendResponse({ success: false, error: 'Invalid license code.' });
       }
     });
     return true;
   }
+  if (request.action === 'getGumroadUrl') {
+    sendResponse({ url: GUMROAD_URL });
+    return false;
+  }
+  if (request.action === 'saveMode') {
+    chrome.storage.local.set({ lastMode: request.mode });
+    return false;
+  }
 });
+
+async function handleRewrite(request, sendResponse) {
+  if (!(await canRewrite())) {
+    sendResponse({ error: 'FREE_LIMIT', message: 'Free limit reached. Upgrade to Pro.' });
+    return;
+  }
+  const apiKey = await getEffectiveApiKey();
+  if (!apiKey) {
+    sendResponse({ error: 'No API key available.' });
+    return;
+  }
+  const usingBuiltIn = await isUsingBuiltInKey();
+  if (usingBuiltIn) await incrementUsage();
+  try {
+    const result = await rewriteText(request.text, request.mode, apiKey);
+    sendResponse(result);
+  } catch (err) {
+    sendResponse({ error: err.message });
+  }
+}
 
 async function rewriteText(text, mode, apiKey) {
   const systemPrompts = {
