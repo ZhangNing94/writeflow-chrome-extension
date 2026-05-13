@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WriteFlow Settings</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; max-width: 480px; margin: 0 auto; }
+    .header { margin-bottom: 24px; }
+    .logo { font-size: 22px; font-weight: 700; color: #10B981; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .logo-icon { background: #10B981; color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; }
+    .desc { font-size: 13px; color: #64748b; }
+    .section { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .section-title { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 10px; }
+    label { display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 500; }
+    input[type="password"] { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; outline: none; font-family: monospace; letter-spacing: 0.5px; }
+    input[type="password"]:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+    .hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-primary { padding: 8px 20px; background: #10B981; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-primary:hover { background: #059669; }
+    .btn-secondary { padding: 8px 20px; background: #fff; color: #475569; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    .btn-secondary:hover { background: #f8fafc; }
+    .status { font-size: 12px; margin-top: 8px; padding: 6px 10px; border-radius: 4px; display: none; }
+    .status.success { display: block; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .status.error { display: block; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .how-to { font-size: 12px; color: #64748b; margin-top: 8px; }
+    .how-to a { color: #10B981; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo"><span class="logo-icon">W</span> WriteFlow Settings</div>
+    <p class="desc">Configure your DeepSeek API Key for unlimited AI rewrites</p>
+  </div>
+  <div class="section">
+    <div class="section-title">API Configuration</div>
+    <label for="apiKey">DeepSeek API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
+    <p class="hint">Your key starts with "sk-" and is stored locally. Get one at <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a></p>
+    <div class="btn-row">
+      <button id="saveBtn" class="btn-primary">Save Key</button>
+      <button id="clearBtn" class="btn-secondary">Remove Key</button>
+    </div>
+    <div id="statusMsg" class="status"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">How It Works</div>
+    <p class="how-to">
+      1. Get a free DeepSeek API Key from <a href="https://platform.deepseek.com/api_keys" target="_blank">DeepSeek Platform</a><br>
+      2. Paste your key (starts with "sk-") above and save<br>
+      3. Select text on any page, right-click → "Rewrite with WriteFlow"<br>
+      4. Or click the WriteFlow icon to open the popup<br>
+      5. All data is processed locally; your key never leaves your browser
+    </p>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

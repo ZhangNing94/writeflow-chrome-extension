@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WriteFlow</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="logo"><span class="logo-icon">W</span> WriteFlow</h1>
+      <p class="tagline">Free unlimited AI rewrites</p>
+    </header>
+    <div id="noApiKey" class="api-key-warning hidden">
+      <p>⚠️ Please set your DeepSeek API Key in <a href="#" id="openOptions">Settings</a></p>
+    </div>
+    <div class="input-section">
+      <textarea id="inputText" placeholder="Paste or type your text here..." rows="4"></textarea>
+      <div class="input-footer">
+        <span id="charCount" class="char-count">0 / 2000</span>
+        <button id="clearBtn" class="btn-icon" title="Clear">✕</button>
+      </div>
+    </div>
+    <div class="mode-section">
+      <label class="mode-label">Rewrite Mode</label>
+      <div class="mode-buttons">
+        <button class="mode-btn" data-mode="Formal">Formal</button>
+        <button class="mode-btn active" data-mode="Simple">Simple</button>
+        <button class="mode-btn" data-mode="Creative">Creative</button>
+        <button class="mode-btn" data-mode="Academic">Academic</button>
+      </div>
+    </div>
+    <button id="rewriteBtn" class="primary-btn" disabled>
+      <span id="btnText">Rewrite</span>
+      <span id="btnSpinner" class="spinner hidden">
+        <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+      </span>
+    </button>
+    <div id="errorMsg" class="error-msg hidden"></div>
+    <div id="resultSection" class="result-section hidden">
+      <div class="result-header">
+        <span class="result-label">Rewritten Text</span>
+        <div class="result-actions">
+          <button id="copyBtn" class="btn-sm" title="Copy">📋 Copy</button>
+        </div>
+      </div>
+      <div id="resultText" class="result-text"></div>
+      <div id="scoreBar" class="score-bar hidden">
+        <div class="score-header"><span>Humanized Score</span><span id="scoreValue" class="score-value">0%</span></div>
+        <div class="score-track"><div id="scoreFill" class="score-fill"></div></div>
+      </div>
+    </div>
+    <div id="historySection" class="history-section hidden">
+      <div class="history-header"><span>Recent Rewrites</span></div>
+      <div id="historyList" class="history-list"></div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
