@@ -47,10 +47,14 @@ function init() {
     });
   });
 
-  // Check API key and enable button
+  // Check API key and show warning if not set (Issue #8)
+  const noApiKey = document.getElementById('noApiKey');
   chrome.storage.local.get(['apiKey', 'history'], data => {
     if (data.history && data.history.length > 0) {
       renderHistory(data.history);
+    }
+    if (!data.apiKey) {
+      noApiKey.classList.remove('hidden');
     }
   });
 
