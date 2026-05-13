@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WriteFlow Privacy Policy</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.7; padding: 40px 20px; max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 28px; color: #10B981; margin-bottom: 8px; }
+    h2 { font-size: 18px; color: #334155; margin-top: 28px; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
+    p, li { font-size: 14px; color: #475569; margin-bottom: 8px; }
+    ul { padding-left: 20px; margin-bottom: 12px; }
+    a { color: #10B981; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .date { font-size: 12px; color: #94a3b8; margin-bottom: 24px; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>WriteFlow Privacy Policy</h1>
+  <p class="date">Last updated: May 13, 2026</p>
+
+  <h2>1. Data Collection</h2>
+  <p>WriteFlow collects <strong>minimal data</strong> and stores it <strong>locally on your device</strong>:</p>
+  <ul>
+    <li><strong>Settings & Preferences:</strong> Your selected rewrite mode (Formal/Simple/Creative/Academic), Pro license status, and optional API key are stored in Chrome's local storage (<code>chrome.storage.local</code>). None of this data is sent to our servers — we don't have servers.</li>
+    <li><strong>Usage Counter:</strong> A daily counter of free rewrites used is stored locally to enforce the free tier limit. This counter resets daily.</li>
+    <li><strong>Text Content:</strong> The text you type or select for rewriting is sent to the DeepSeek API solely for the purpose of generating rewritten output. WriteFlow does not log, store, or retain your text content on any server.</li>
+  </ul>
+  <p>We <strong>do not</strong> collect: browsing history, personal identification information, cookies, IP addresses, or any analytics/tracking data.</p>
+
+  <h2>2. Data Processing & Third-Party Services</h2>
+  <p>WriteFlow uses one third-party service:</p>
+  <ul>
+    <li><strong>DeepSeek API (<a href="https://api.deepseek.com">api.deepseek.com</a>)</strong> — The text you submit for rewriting is transmitted to DeepSeek's API for AI-powered text generation. DeepSeek's privacy policy applies to data processed through their API: <a href="https://platform.deepseek.com/privacy">platform.deepseek.com/privacy</a>.</li>
+  </ul>
+  <p>When using the <strong>Pro license</strong>, license verification requests are sent to verify your 6-digit PIN. No personal information is associated with this verification.</p>
+
+  <h2>3. Permission Justifications</h2>
+  <p>WriteFlow requests the following Chrome permissions for specific functionality:</p>
+  <ul>
+    <li><strong><code>activeTab</code></strong> — Needed to read the text on your current tab for rewrites. WriteFlow only accesses the tab when you activate the extension (click the icon or use the right-click context menu).</li>
+    <li><strong><code>storage</code></strong> — Used to save your preferences (mode selection, API key, Pro status) locally on your device. All data in <code>chrome.storage.local</code> stays on your computer.</li>
+    <li><strong><code>contextMenus</code></strong> — Used to add a "Rewrite with WriteFlow" option to the right-click menu, allowing you to select and rewrite text on any page.</li>
+    <li><strong><code>clipboardWrite</code></strong> — Used solely for the "Copy" button to copy rewritten text to your clipboard at your request.</li>
+    <li><strong><code>scripting</code></strong> — Used to inject the rewrite result UI into the page when you use the right-click rewrite feature. Scripts are only injected on pages where you explicitly trigger a rewrite.</li>
+    <li><strong>Host: <code>api.deepseek.com</code></strong> — Required to send rewrite requests to the DeepSeek API. Only text you explicitly submit for rewriting is transmitted.</li>
+  </ul>
+
+  <h2>4. Your Rights & Control</h2>
+  <ul>
+    <li><strong>Delete Your Data:</strong> All settings and stored data can be cleared by removing the extension or using the "Remove Key" button in Settings. WriteFlow stores nothing remotely.</li>
+    <li><strong>Uninstall:</strong> Simply remove the extension from Chrome. No data persists after uninstallation.</li>
+    <li><strong>Opt Out:</strong> If you prefer not to use the built-in AI, you can bring your own DeepSeek API Key in Settings. The built-in key is then bypassed.</li>
+    <li><strong>No Account Required:</strong> WriteFlow works without signup, login, or any personal information.</li>
+  </ul>
+
+  <h2>5. Data Security</h2>
+  <ul>
+    <li>The built-in API key is obfuscated in the source code and cannot be extracted by users.</li>
+    <li>Your optional personal API key is stored in Chrome's encrypted local storage and never transmitted except to DeepSeek's API for text rewriting.</li>
+    <li>All communication with DeepSeek's API uses HTTPS.</li>
+    <li>WriteFlow does not use analytics, crash reporting, or any background data collection.</li>
+  </ul>
+
+  <h2>6. Contact</h2>
+  <p>For questions about this privacy policy or your data, please contact:</p>
+  <ul>
+    <li><strong>Email:</strong> zhangning94@outlook.com</li>
+    <li><strong>GitHub:</strong> <a href="https://github.com/ZhangNing94/writeflow-chrome-extension/issues">github.com/ZhangNing94/writeflow-chrome-extension/issues</a></li>
+  </ul>
+
+  <div class="footer">
+    <p>WriteFlow Chrome Extension — &copy; 2026. This privacy policy is hosted at <a href="https://zhangning94.github.io/writeflow-chrome-extension/privacy-policy.html">zhangning94.github.io/writeflow-chrome-extension/privacy-policy.html</a>.</p>
+  </div>
+</body>
+</html>
