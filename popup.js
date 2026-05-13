@@ -9,6 +9,7 @@ function init() {
   const rewriteBtn = document.getElementById('rewriteBtn');
   const clearBtn = document.getElementById('clearBtn');
   const copyBtn = document.getElementById('copyBtn');
+  const replaceBtn = document.getElementById('replaceBtn');
   const openOptions = document.getElementById('openOptions');
   const upgradeModal = document.getElementById('upgradeModal');
   const getProBtn = document.getElementById('getProBtn');
@@ -76,6 +77,7 @@ function init() {
   rewriteBtn.addEventListener('click', doRewrite);
   clearBtn.addEventListener('click', () => { inputText.value = ''; inputText.dispatchEvent(new Event('input')); });
   copyBtn.addEventListener('click', copyResult);
+  replaceBtn.addEventListener('click', replaceResult);
   openOptions.addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
 
   // Upgrade modal handlers
@@ -93,7 +95,19 @@ function init() {
     e.preventDefault();
     chrome.runtime.openOptionsPage();
   });
+
+  // Gentle banner handlers (Issue #6)
+  const gentleBannerInit = document.getElementById('gentleBanner');
+  const bannerUpgradeInit = document.getElementById('bannerUpgrade');
+  const bannerDismissInit = document.getElementById('bannerDismiss');
+  bannerUpgradeInit.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'getGumroadUrl' }, resp => {
+      if (resp && resp.url) chrome.tabs.create({ url: resp.url });
+    });
+  });
+  bannerDismissInit.addEventListener('click', () => gentleBannerInit.classList.add('hidden'));
 }
+
 
 async function checkRewriteLimit(rewriteBtn, upgradeModal) {
   try {
@@ -130,6 +144,8 @@ async function doRewrite() {
   const scoreBar = document.getElementById('scoreBar');
   const btnText = document.getElementById('btnText');
   const btnSpinner = document.getElementById('btnSpinner');
+  const gentleBanner = document.getElementById('gentleBanner');
+  const bannerText = document.getElementById('bannerText');
   const upgradeModal = document.getElementById('upgradeModal');
 
   errorMsg.classList.add('hidden');
@@ -139,6 +155,19 @@ async function doRewrite() {
   btnText.classList.add('hidden');
   btnSpinner.classList.remove('hidden');
 
+  // Progress text - start with Rewriting
+  btnText.textContent = 'Rewriting';
+  btnText.classList.remove('hidden');
+  btnSpinner.classList.add('hidden');
+
+  // After 5 seconds, show "Almost done..."
+  const progressTimeout = setTimeout(() => {
+    const currentBtnText = document.getElementById('btnText');
+    if (!currentBtnText.classList.contains('hidden') || resultSection.classList.contains('hidden')) {
+      currentBtnText.textContent = 'Almost done...';
+    }
+  }, 5000);
+
   try {
     const response = await chrome.runtime.sendMessage({
       action: 'rewrite',
@@ -147,8 +176,9 @@ async function doRewrite() {
     });
 
     if (response.error === 'FREE_LIMIT' || response.error === 'FREE_LIMIT_UPSELL') {
-      rewriteBtn.classList.add('hidden');
-      upgradeModal.classList.remove('hidden');
+      // Gentle banner instead of blocking modal (Issue #6)
+      gentleBanner.classList.remove('hidden');
+      bannerText.textContent = 'You have used 3/3 free rewrites today. Want more?';
       return;
     }
 
@@ -173,8 +203,10 @@ async function doRewrite() {
     errorMsg.classList.remove('hidden');
   } finally {
     rewriteBtn.disabled = false;
+    btnText.textContent = 'Rewrite';
     btnText.classList.remove('hidden');
     btnSpinner.classList.add('hidden');
+    clearTimeout(progressTimeout);
     // Re-check limit after rewrite
     await checkRewriteLimit(rewriteBtn, upgradeModal);
   }
@@ -220,6 +252,33 @@ function renderHistory(history) {
     const timeStr = `${time.getHours().toString().padStart(2,'0')}:${time.getMinutes().toString().padStart(2,'0')}`;
     return `<div class="history-item"><span class="mode-tag">${h.mode}</span>${h.rewritten.substring(0, 50)} - ${timeStr}</div>`;
   }).join('');
+}
+
+async function replaceResult() {
+  const newText = document.getElementById('resultText').textContent;
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tabs[0] && tabs[0].id) {
+      await chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        func: (text) => {
+          const sel = window.getSelection();
+          if (sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(document.createTextNode(text));
+          }
+        },
+        args: [newText]
+      });
+      const btn = document.getElementById('replaceBtn');
+      btn.textContent = 'Replaced';
+      setTimeout(() => { btn.textContent = 'Replace'; }, 2000);
+    }
+  } catch (e) {
+    document.getElementById('errorMsg').textContent = 'Replace failed: ' + e.message;
+    document.getElementById('errorMsg').classList.remove('hidden');
+  }
 }
 
 async function copyResult() {

@@ -38,7 +38,7 @@
       <p>Please set your DeepSeek API Key in <a href="#" id="openOptions">Settings</a></p>
     </div>
     <div class="input-section">
-      <textarea id="inputText" placeholder="Paste or type your text here..." rows="4"></textarea>
+      <textarea id="inputText" placeholder="Select text on any webpage, or paste here to rewrite..." rows="4"></textarea>
       <div class="input-footer">
         <span id="charCount" class="char-count">0 / 2000</span>
         <button id="clearBtn" class="btn-icon" title="Clear">x</button>
@@ -65,6 +65,7 @@
         <span class="result-label">Rewritten Text</span>
         <div class="result-actions">
           <button id="copyBtn" class="btn-sm" title="Copy">Copy</button>
+          <button id="replaceBtn" class="btn-sm" title="Replace original text">Replace</button>
         </div>
       </div>
       <div id="resultText" class="result-text"></div>
@@ -76,6 +77,12 @@
     <div id="historySection" class="history-section hidden">
       <div class="history-header"><span>Recent Rewrites</span></div>
       <div id="historyList" class="history-list"></div>
+    </div>
+    <div class="privacy-badge">Your data stays local 🔒</div>
+    <div id="gentleBanner" class="gentle-banner hidden">
+      <span id="bannerText"></span>
+      <button id="bannerUpgrade" class="banner-btn">Unlock Unlimited</button>
+      <button id="bannerDismiss" class="banner-dismiss">Not now</button>
     </div>
   </div>
   <script src="popup.js"></script>

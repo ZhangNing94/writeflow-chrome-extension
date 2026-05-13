@@ -66,3 +66,39 @@ textarea:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129,
 .upgrade-btn:hover { background: #059669; }
 .upgrade-btn-outline { width: 100%; padding: 10px; background: #fff; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; }
 .upgrade-btn-outline:hover { border-color: #10B981; color: #10B981; }
+
+/* Gentle Usage Banner (Issue #6) */
+.gentle-banner { background: #f0fdf4; border: 1px solid #a7f3d0; border-radius: 6px; padding: 8px 10px; margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11px; color: #065f46; }
+.gentle-banner .banner-btn { padding: 4px 10px; background: #10B981; color: #fff; border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.gentle-banner .banner-btn:hover { background: #059669; }
+.gentle-banner .banner-dismiss { background: none; border: none; font-size: 11px; color: #64748b; cursor: pointer; text-decoration: underline; font-family: inherit; }
+
+/* Privacy Badge (Issue #7) */
+.privacy-badge { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 8px; padding: 4px 0; }
+
+/* Dark Mode (Issue #7) */
+@media (prefers-color-scheme: dark) {
+  body { background: #1e293b; color: #e2e8f0; }
+  .container { /* dark handled by body */ }
+  .input-section textarea { background: #334155; border-color: #475569; color: #e2e8f0; }
+  .input-section textarea:focus { border-color: #34d399; box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15); }
+  .mode-btn { background: #334155; border-color: #475569; color: #cbd5e1; }
+  .mode-btn:hover { border-color: #34d399; color: #34d399; }
+  .mode-btn.active { background: #10B981; border-color: #10B981; color: #fff; }
+  .primary-btn { background: #10B981; }
+  .primary-btn:disabled { background: #475569; }
+  .result-section { background: #334155; border-color: #475569; }
+  .result-text { color: #e2e8f0; }
+  .btn-sm { background: #334155; border-color: #475569; color: #cbd5e1; }
+  .btn-sm:hover { border-color: #34d399; color: #34d399; }
+  .history-section { background: #334155; border-color: #475569; }
+  .history-item { border-bottom-color: #475569; color: #cbd5e1; }
+  .upgrade-content { background: #1e293b; }
+  .upgrade-subtitle, .upgrade-feature { color: #cbd5e1; }
+  .upgrade-price { color: #e2e8f0; }
+  .upgrade-btn-outline { background: #334155; border-color: #475569; color: #cbd5e1; }
+  .gentle-banner { background: #064e3b; border-color: #065f46; color: #a7f3d0; }
+  .score-track { background: #475569; }
+  .api-key-warning { background: #451a03; border-color: #92400e; color: #fcd34d; }
+  .error-msg { background: #450a0a; border-color: #991b1b; color: #fca5a5; }
+}
