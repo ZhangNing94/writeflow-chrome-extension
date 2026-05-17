@@ -1,4 +1,14 @@
 // WriteFlow Options - options.js
+// API Key: char-code encoded storage (Issue #15)
+
+function encodeApiKey(key) {
+  return key.split('').map(c => c.charCodeAt(0)).join(',');
+}
+
+function decodeApiKey(encoded) {
+  if (!encoded) return '';
+  return encoded.split(',').map(c => String.fromCharCode(parseInt(c))).join('');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const apiKeyInput = document.getElementById('apiKey');
@@ -11,11 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const licenseStatus = document.getElementById('licenseStatus');
   const proStatusText = document.getElementById('proStatusText');
   const proBadge = document.getElementById('proBadge');
-  const proSection = document.getElementById('proSection');
 
-  // Init: load existing settings
+  // Init: load existing settings — decode stored key
   chrome.storage.local.get(['apiKey', 'isPro'], (data) => {
-    if (data.apiKey) apiKeyInput.value = data.apiKey;
+    if (data.apiKey) apiKeyInput.value = decodeApiKey(data.apiKey);
     if (data.isPro) updateProUI(true);
   });
 
@@ -31,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // API Key save/clear
+  // API Key save — encode before storing
   saveBtn.addEventListener('click', () => {
     const key = apiKeyInput.value.trim();
     if (!key) {
@@ -42,7 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
       showStatus(statusMsg, 'Invalid key format. DeepSeek API keys start with "sk-".', 'error');
       return;
     }
-    chrome.storage.local.set({ apiKey: key }, () => {
+    // Encode before storing - char-code obfuscation
+    chrome.storage.local.set({ apiKey: encodeApiKey(key) }, () => {
       showStatus(statusMsg, 'API Key saved! Using your own key (unlimited).', 'success');
     });
   });

@@ -1,29 +1,35 @@
 // WriteFlow Background Service Worker - background.js
+// API Key: char-code encoding (consistent with popup.js)
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const FREE_LIMIT = 3;
 const GUMROAD_URL = 'https://zhangning94.gumroad.com/l/writeflow-pro';
 
-// Built-in API Key (XOR+base64 obfuscated) - replace encoded string with real key
-// Generate: run in console -> btoa([...'sk-xxx'].map((c,i)=>String.fromCharCode(c.charCodeAt(0)^'WFLO'.charCodeAt(i%4))).join(''))
-const _EK = 'cGFlb2hvbGRlclo='; // placeholder - REPLACE with encoded real API key
-const _XK = 'WFLO';
-
-function decodeBuiltInKey(ek) {
-  try {
-    const b = Uint8Array.from(atob(ek), c => c.charCodeAt(0));
-    for (let i = 0; i < b.length; i++) b[i] ^= _XK.charCodeAt(i % _XK.length);
-    return new TextDecoder().decode(b);
-  } catch { return null; }
+// --- API Key Encoding/Decoding (char-code, consistent with popup.js) ---
+function encodeApiKey(key) {
+  return key.split('').map(c => c.charCodeAt(0)).join(',');
 }
 
-const BUILT_IN_KEY = decodeBuiltInKey(_EK);
+function decodeApiKey(encoded) {
+  if (!encoded) return '';
+  return encoded.split(',').map(c => String.fromCharCode(parseInt(c))).join('');
+}
+
+// Built-in API key (XOR+base64 replaced with char-code encoded placeholder)
+// Replace the encoded string below with: encodeApiKey('sk-your-real-key').split(',').join(',')
+const BUILT_IN_KEY_ENCODED = ''; // Set via popup, or hardcode: encodeApiKey('sk-...')
+
+async function getEffectiveApiKey() {
+  return new Promise(resolve => {
+    chrome.storage.local.get('apiKey', data => {
+      resolve(data.apiKey ? decodeApiKey(data.apiKey) : decodeApiKey(BUILT_IN_KEY_ENCODED));
+    });
+  });
+}
 
 // Pre-generated Pro license codes (SHA-256 hashes)
-// Run in console to generate: crypto.subtle.digest('SHA-256', new TextEncoder().encode('CODE')).then(h => Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join(''))
 const VALID_LICENSE_HASHES = [
-  'placeholder_hash_1',  // Replace with real hashes
-  'placeholder_hash_2'
+  // TODO: Add real license hashes here
 ];
 
 async function hashLicenseCode(code) {
@@ -71,14 +77,6 @@ async function checkProStatus() {
   });
 }
 
-async function getEffectiveApiKey() {
-  return new Promise(resolve => {
-    chrome.storage.local.get('apiKey', data => {
-      resolve(data.apiKey || BUILT_IN_KEY);
-    });
-  });
-}
-
 async function isUsingBuiltInKey() {
   return new Promise(resolve => {
     chrome.storage.local.get('apiKey', data => resolve(!data.apiKey));
@@ -89,12 +87,12 @@ async function canRewrite() {
   const isPro = await checkProStatus();
   if (isPro) return true;
   const usingBuiltIn = await isUsingBuiltInKey();
-  if (!usingBuiltIn) return true; // BYOK user - unlimited
+  if (!usingBuiltIn) return true;
   const usage = await getUsageForToday();
   return usage < FREE_LIMIT;
 }
 
-// Daily reset alarm
+// --- Context Menu ---
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: 'writeflow-rewrite',
@@ -103,7 +101,6 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Context menu: use saved mode
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'writeflow-rewrite' && info.selectionText) {
     chrome.storage.local.get(['apiKey', 'lastMode'], async (data) => {
@@ -114,7 +111,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         });
         return;
       }
-      const apiKey = data.apiKey || BUILT_IN_KEY;
+      const apiKey = data.apiKey ? decodeApiKey(data.apiKey) : decodeApiKey(BUILT_IN_KEY_ENCODED);
       if (!apiKey) {
         chrome.tabs.sendMessage(tab.id, {
           action: 'showNotification',
@@ -147,6 +144,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
+// --- Message Handlers ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'rewrite') {
     handleRewrite(request, sendResponse);
@@ -238,7 +236,6 @@ async function rewriteText(text, mode, apiKey) {
 
   const data = await response.json();
   const rewritten = data.choices?.[0]?.message?.content?.trim();
-
   if (!rewritten) throw new Error('No response from AI. Please try again.');
 
   const score = calcHumanizedScore(rewritten);
