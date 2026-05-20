@@ -1,28 +1,26 @@
 // WriteFlow Background Service Worker - background.js
 // API Key: char-code encoding (consistent with popup.js)
 
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const FREE_LIMIT = 3;
 const GUMROAD_URL = 'https://zhangning94.gumroad.com/l/writeflow-pro';
 
-// --- API Key Encoding/Decoding (char-code, consistent with popup.js) ---
-function encodeApiKey(key) {
-  return key.split('').map(c => c.charCodeAt(0)).join(',');
-}
+// --- Built-in API Key (base64 obfuscated) ---
+const BUILT_IN_KEY_B64 = 'c2stODc4Nzc1YmQtaXdXNHI5MXhBRGk3WktZVlQ4WDFZeTRjSGY2ZE9qbA==';
 
-function decodeApiKey(encoded) {
-  if (!encoded) return '';
-  return encoded.split(',').map(c => String.fromCharCode(parseInt(c))).join('');
+// --- API Key Decoding (base64) ---
+function decodeB64(str) {
+  try { return atob(str); } catch(e) { return ''; }
 }
-
-// Built-in API key (XOR+base64 replaced with char-code encoded placeholder)
-// Replace the encoded string below with: encodeApiKey('sk-your-real-key').split(',').join(',')
-const BUILT_IN_KEY_ENCODED = ''; // Set via popup, or hardcode: encodeApiKey('sk-...')
 
 async function getEffectiveApiKey() {
   return new Promise(resolve => {
     chrome.storage.local.get('apiKey', data => {
-      resolve(data.apiKey ? decodeApiKey(data.apiKey) : decodeApiKey(BUILT_IN_KEY_ENCODED));
+      if (data.apiKey) {
+        const decoded = decodeB64(data.apiKey);
+        if (decoded) { resolve(decoded); return; }
+      }
+      resolve(decodeB64(BUILT_IN_KEY_B64));
     });
   });
 }
@@ -111,7 +109,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         });
         return;
       }
-      const apiKey = data.apiKey ? decodeApiKey(data.apiKey) : decodeApiKey(BUILT_IN_KEY_ENCODED);
+      const apiKey = await getEffectiveApiKey();
       if (!apiKey) {
         chrome.tabs.sendMessage(tab.id, {
           action: 'showNotification',

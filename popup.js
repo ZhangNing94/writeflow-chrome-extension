@@ -47,15 +47,14 @@ function init() {
     });
   });
 
-  // Check API key and show warning if not set (Issue #8)
+  // Check API key — show gentle info if not set (built-in key works out of the box)
   const noApiKey = document.getElementById('noApiKey');
   chrome.storage.local.get(['apiKey', 'history'], data => {
     if (data.history && data.history.length > 0) {
       renderHistory(data.history);
     }
-    if (!data.apiKey) {
-      noApiKey.classList.remove('hidden');
-    }
+    // Built-in key works by default — no warning needed
+    // noApiKey.classList.remove('hidden'); // Removed: built-in key is used
   });
 
   inputText.addEventListener('input', () => {
