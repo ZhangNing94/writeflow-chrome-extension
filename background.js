@@ -3,7 +3,7 @@
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const FREE_LIMIT = 3;
-const GUMROAD_URL = 'https://zhangning94.gumroad.com/l/writeflow-pro';
+const GUMROAD_URL = 'https://5330159977060.gumroad.com/l/xhzru';
 
 // --- Built-in API Key (base64 obfuscated) ---
 const BUILT_IN_KEY_B64 = 'c2stODc4Nzc1YmQtaXdXNHI5MXhBRGk3WktZVlQ4WDFZeTRjSGY2ZE9qbA==';
@@ -25,22 +25,12 @@ async function getEffectiveApiKey() {
   });
 }
 
-// Pre-generated Pro license codes (SHA-256 hashes)
-const VALID_LICENSE_HASHES = [
-  // TODO: Add real license hashes here
-];
+// License validation — simple local format check
+// Valid format: WFLX-XXXX-XXXX (4-prefix + 2 groups of 4 alphanumeric chars)
+const LICENSE_REGEX = /^WFLX-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
 
-async function hashLicenseCode(code) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(code.trim().toUpperCase());
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function verifyLicenseCode(code) {
-  const hash = await hashLicenseCode(code);
-  return VALID_LICENSE_HASHES.includes(hash);
+function verifyLicenseCode(code) {
+  return LICENSE_REGEX.test(code.trim().toUpperCase());
 }
 
 async function getUsageForToday() {

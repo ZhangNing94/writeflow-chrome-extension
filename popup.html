@@ -16,6 +16,23 @@
       </div>
     </header>
 
+    <!-- Pro Section (always visible) -->
+    <div id="proSection" class="pro-section">
+      <div id="proFree">
+        <button id="upgradeProPopupBtn" class="pro-upgrade-btn">💎 Upgrade to Pro · $4.99</button>
+        <div class="pro-license-row">
+          <input type="text" id="licenseInput" placeholder="Enter license key" maxlength="14" autocomplete="off" spellcheck="false">
+          <button id="activateBtn" class="pro-activate-btn">Activate</button>
+        </div>
+        <div id="licenseMsg" class="license-msg"></div>
+        <p class="pro-hint">Purchase once, use forever. No subscription.</p>
+      </div>
+      <div id="proActive" class="pro-active hidden">
+        <span class="pro-badge-inline">● PRO</span>
+        <span class="pro-unlimited">Unlimited rewrites unlocked</span>
+      </div>
+    </div>
+
     <!-- Upgrade Modal -->
     <div id="upgradeModal" class="upgrade-modal hidden">
       <div class="upgrade-content">

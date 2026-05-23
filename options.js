@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   buyBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'https://zhangning94.gumroad.com/l/writeflow-pro' });
+    chrome.tabs.create({ url: 'https://5330159977060.gumroad.com/l/xhzru' });
   });
 
   function showStatus(el, msg, type) {

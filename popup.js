@@ -17,9 +17,18 @@ function init() {
   const useOwnKey = document.getElementById('useOwnKey');
   const modeBtns = document.querySelectorAll('.mode-btn');
 
-  // Check usage and pro status
-  updateUsageDisplay();
-  checkRewriteLimit(rewriteBtn, upgradeModal);
+  // Pro section refs
+  const proSection = document.getElementById('proSection');
+  const proFree = document.getElementById('proFree');
+  const proActive = document.getElementById('proActive');
+  const upgradeProPopupBtn = document.getElementById('upgradeProPopupBtn');
+  const activateBtn = document.getElementById('activateBtn');
+  const licenseInput = document.getElementById('licenseInput');
+  const licenseMsg = document.getElementById('licenseMsg');
+  const proUsageCount = document.getElementById('proUsageCount');
+
+  // Check pro status and show appropriate UI
+  checkProAndShowUI();
 
   // Auto-fill selected text from active tab
   chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
@@ -47,32 +56,22 @@ function init() {
     });
   });
 
-  // Check API key — show gentle info if not set (built-in key works out of the box)
-  const noApiKey = document.getElementById('noApiKey');
-  chrome.storage.local.get(['apiKey', 'history'], data => {
+  // Load history
+  chrome.storage.local.get(['history'], data => {
     if (data.history && data.history.length > 0) {
       renderHistory(data.history);
     }
-    // Built-in key works by default — no warning needed
-    // noApiKey.classList.remove('hidden'); // Removed: built-in key is used
   });
 
   inputText.addEventListener('input', () => {
     const len = inputText.value.length;
     document.getElementById('charCount').textContent = `${len} / ${MAX_CHARS}`;
-    chrome.runtime.sendMessage({ action: 'getUsage' }, resp => {
-      if (resp) {
-        const canRewrite = resp.isPro || resp.usingBuiltIn ? resp.usage < resp.limit && !!resp.usingBuiltIn : true;
-        rewriteBtn.disabled = !inputText.value.trim();
-      }
-    });
   });
 
   modeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       modeBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      // Save mode to storage (Issue #3 item 6)
       chrome.runtime.sendMessage({ action: 'saveMode', mode: btn.dataset.mode });
     });
   });
@@ -83,23 +82,48 @@ function init() {
   replaceBtn.addEventListener('click', replaceResult);
   openOptions.addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
 
+  // Pro section handlers
+  upgradeProPopupBtn.addEventListener('click', () => {
+    chrome.runtime.sendMessage({ action: 'getGumroadUrl' }, resp => {
+      if (resp && resp.url) chrome.tabs.create({ url: resp.url });
+    });
+  });
+
+  activateBtn.addEventListener('click', async () => {
+    const code = licenseInput.value.trim().toUpperCase();
+    if (!code) {
+      showLicenseMsg(licenseMsg, 'Please enter your license key.', 'error');
+      return;
+    }
+    activateBtn.disabled = true;
+    activateBtn.textContent = 'Checking...';
+    try {
+      const resp = await chrome.runtime.sendMessage({ action: 'verifyLicense', code });
+      if (resp && resp.success) {
+        showLicenseMsg(licenseMsg, '✅ Pro activated! Unlimited rewrites unlocked.', 'success');
+        setTimeout(() => checkProAndShowUI(), 800);
+      } else {
+        showLicenseMsg(licenseMsg, resp.error || 'Invalid license key.', 'error');
+        activateBtn.disabled = false;
+        activateBtn.textContent = 'Activate';
+      }
+    } catch (e) {
+      showLicenseMsg(licenseMsg, 'Error: ' + e.message, 'error');
+      activateBtn.disabled = false;
+      activateBtn.textContent = 'Activate';
+    }
+  });
+
   // Upgrade modal handlers
   getProBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'getGumroadUrl' }, resp => {
-      if (resp && resp.url) {
-        chrome.tabs.create({ url: resp.url });
-      }
+      if (resp && resp.url) chrome.tabs.create({ url: resp.url });
     });
   });
-  upgradeCloseBtn.addEventListener('click', () => {
-    upgradeModal.classList.add('hidden');
-  });
-  useOwnKey.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.runtime.openOptionsPage();
-  });
+  upgradeCloseBtn.addEventListener('click', () => upgradeModal.classList.add('hidden'));
+  useOwnKey.addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
 
-  // Gentle banner handlers (Issue #6)
+  // Gentle banner handlers
   const gentleBannerInit = document.getElementById('gentleBanner');
   const bannerUpgradeInit = document.getElementById('bannerUpgrade');
   const bannerDismissInit = document.getElementById('bannerDismiss');
@@ -109,6 +133,39 @@ function init() {
     });
   });
   bannerDismissInit.addEventListener('click', () => gentleBannerInit.classList.add('hidden'));
+}
+
+function showLicenseMsg(el, msg, type) {
+  el.textContent = msg;
+  el.className = `license-msg ${type}`;
+  setTimeout(() => { el.textContent = ''; el.className = 'license-msg'; }, 4000);
+}
+
+function checkProAndShowUI() {
+  const proFree = document.getElementById('proFree');
+  const proActive = document.getElementById('proActive');
+  const proUsageCount = document.getElementById('proUsageCount');
+  const rewriteBtn = document.getElementById('rewriteBtn');
+
+  chrome.storage.local.get(['isPro', 'usageCount', 'usageDate'], data => {
+    const today = new Date().toDateString();
+    const usage = data.usageDate === today ? (data.usageCount || 0) : 0;
+
+    if (data.isPro) {
+      proFree.classList.add('hidden');
+      proActive.classList.remove('hidden');
+    } else {
+      proFree.classList.remove('hidden');
+      proActive.classList.add('hidden');
+      if (proUsageCount) proUsageCount.textContent = usage;
+    }
+    // Also update usage badge if present
+    const usageBadge = document.getElementById('usageBadge');
+    if (usageBadge && !data.isPro) {
+      usageBadge.classList.remove('hidden');
+      document.getElementById('usageCount').textContent = usage;
+    }
+  });
 }
 
 
@@ -131,6 +188,11 @@ async function updateUsageDisplay() {
       document.getElementById('usageBadge').classList.remove('hidden');
       document.getElementById('usageCount').textContent = resp.usage;
       document.getElementById('usageLimit').textContent = resp.limit;
+    }
+    // Also update pro section usage count
+    const proUsageCount = document.getElementById('proUsageCount');
+    if (proUsageCount && !resp.isPro) {
+      proUsageCount.textContent = resp.usage || 0;
     }
   } catch (e) {
     // Ignore errors

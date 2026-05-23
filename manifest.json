@@ -1,14 +1,13 @@
 {
   "manifest_version": 3,
   "name": "WriteFlow - AI Rewriting Assistant",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "One-click AI paraphrasing tool. Works instantly with built-in AI — no setup required. 3 free rewrites/day, unlimited with Pro.",
   "permissions": [
     "activeTab",
     "storage",
     "contextMenus",
-    "clipboardWrite",
-    "scripting"
+    "clipboardWrite"
   ],
   "host_permissions": [
     "https://api.deepseek.com/*"
