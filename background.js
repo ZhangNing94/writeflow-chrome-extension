@@ -1,9 +1,10 @@
-// WriteFlow Background Service Worker - background.js
-// API Key: char-code encoding (consistent with popup.js)
+// WriteFlow Background Service Worker
+// License: Gumroad API verification + 5 free trials
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
-const FREE_LIMIT = 3;
-const GUMROAD_URL = 'https://5330159977060.gumroad.com/l/xhzru';
+const GUMROAD_API = 'https://api.gumroad.com/v2/licenses/verify';
+const FREE_TRIALS = 5;
+const PRODUCT_PERMALINK = 'xl';
 
 // --- Built-in API Key (base64 obfuscated) ---
 const BUILT_IN_KEY_B64 = 'c2stODc4Nzc1YmQtaXdXNHI5MXhBRGk3WktZVlQ4WDFZeTRjSGY2ZE9qbA==';
@@ -14,70 +15,61 @@ function decodeB64(str) {
 }
 
 async function getEffectiveApiKey() {
-  return new Promise(resolve => {
-    chrome.storage.local.get('apiKey', data => {
-      if (data.apiKey) {
-        const decoded = decodeB64(data.apiKey);
-        if (decoded) { resolve(decoded); return; }
-      }
-      resolve(decodeB64(BUILT_IN_KEY_B64));
-    });
-  });
+  const data = await chrome.storage.local.get('apiKey');
+  if (data.apiKey) {
+    const decoded = decodeB64(data.apiKey);
+    if (decoded) return decoded;
+  }
+  return decodeB64(BUILT_IN_KEY_B64);
 }
 
-// License validation — simple local format check
-// Valid format: WFLX-XXXX-XXXX (4-prefix + 2 groups of 4 alphanumeric chars)
-const LICENSE_REGEX = /^WFLX-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-
-function verifyLicenseCode(code) {
-  return LICENSE_REGEX.test(code.trim().toUpperCase());
+// --- License (Gumroad API + trial tracking) ---
+async function isLicenseActivated() {
+  const data = await chrome.storage.local.get('license_activated');
+  return !!data.license_activated;
 }
 
-async function getUsageForToday() {
-  return new Promise(resolve => {
-    chrome.storage.local.get(['usageDate', 'usageCount'], data => {
-      const today = new Date().toDateString();
-      if (data.usageDate !== today) resolve(0);
-      else resolve(data.usageCount || 0);
-    });
-  });
+async function getTrialCount() {
+  const data = await chrome.storage.local.get('license_trial_count');
+  return data.license_trial_count || 0;
 }
 
-async function incrementUsage() {
-  const today = new Date().toDateString();
-  return new Promise(resolve => {
-    chrome.storage.local.get(['usageDate', 'usageCount'], data => {
-      if (data.usageDate !== today) {
-        chrome.storage.local.set({ usageDate: today, usageCount: 1 });
-        resolve(1);
-      } else {
-        const count = (data.usageCount || 0) + 1;
-        chrome.storage.local.set({ usageCount: count });
-        resolve(count);
-      }
-    });
-  });
-}
-
-async function checkProStatus() {
-  return new Promise(resolve => {
-    chrome.storage.local.get('isPro', data => resolve(!!data.isPro));
-  });
-}
-
-async function isUsingBuiltInKey() {
-  return new Promise(resolve => {
-    chrome.storage.local.get('apiKey', data => resolve(!data.apiKey));
-  });
+async function incrementLicenseTrial() {
+  const data = await chrome.storage.local.get('license_trial_count');
+  const count = (data.license_trial_count || 0) + 1;
+  await chrome.storage.local.set({ license_trial_count: count });
+  return count;
 }
 
 async function canRewrite() {
-  const isPro = await checkProStatus();
-  if (isPro) return true;
-  const usingBuiltIn = await isUsingBuiltInKey();
-  if (!usingBuiltIn) return true;
-  const usage = await getUsageForToday();
-  return usage < FREE_LIMIT;
+  if (await isLicenseActivated()) return true;
+  const trials = await getTrialCount();
+  return trials < FREE_TRIALS;
+}
+
+async function verifyLicenseCode(code) {
+  try {
+    const formData = new URLSearchParams();
+    formData.append('product_permalink', PRODUCT_PERMALINK);
+    formData.append('license_key', code.trim());
+    const response = await fetch(GUMROAD_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString()
+    });
+    if (!response.ok) return false;
+    const data = await response.json();
+    if (!data.success) return false;
+    // Refund detection
+    if (data.purchase && data.purchase.refunded) {
+      await chrome.storage.local.remove('license_activated');
+      return false;
+    }
+    await chrome.storage.local.set({ license_activated: true });
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 // --- Context Menu ---
@@ -95,7 +87,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       if (!await canRewrite()) {
         chrome.tabs.sendMessage(tab.id, {
           action: 'showNotification',
-          message: 'Free limit (3/day) reached. Upgrade to Pro for unlimited rewrites.'
+          message: 'Free trial limit reached. Open the popup to activate your license.'
         });
         return;
       }
@@ -108,7 +100,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         return;
       }
       const mode = data.lastMode || 'Simple';
-      if (!data.apiKey) await incrementUsage();
+      if (!data.apiKey) await incrementLicenseTrial();
 
       chrome.tabs.sendMessage(tab.id, {
         action: 'showRewriting',
@@ -139,11 +131,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
   if (request.action === 'getUsage') {
-    getUsageForToday().then(count => {
-      checkProStatus().then(isPro => {
-        isUsingBuiltInKey().then(usingBuiltIn => {
-          sendResponse({ usage: count, limit: FREE_LIMIT, isPro, usingBuiltIn });
-        });
+    getTrialCount().then(trials => {
+      isLicenseActivated().then(activated => {
+        sendResponse({ trials, limit: FREE_TRIALS, activated });
       });
     });
     return true;
@@ -151,18 +141,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'verifyLicense') {
     verifyLicenseCode(request.code).then(valid => {
       if (valid) {
-        chrome.storage.local.set({ isPro: true }, () => {
-          sendResponse({ success: true });
-        });
+        sendResponse({ success: true });
       } else {
-        sendResponse({ success: false, error: 'Invalid license code.' });
+        sendResponse({ success: false, error: 'Invalid license key or refund detected.' });
       }
     });
     return true;
-  }
-  if (request.action === 'getGumroadUrl') {
-    sendResponse({ url: GUMROAD_URL });
-    return false;
   }
   if (request.action === 'saveMode') {
     chrome.storage.local.set({ lastMode: request.mode });
@@ -172,7 +156,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function handleRewrite(request, sendResponse) {
   if (!(await canRewrite())) {
-    sendResponse({ error: 'FREE_LIMIT', message: 'Free limit reached. Upgrade to Pro.' });
+    sendResponse({ error: 'FREE_LIMIT', message: 'Free trial limit reached. Please activate your license.' });
     return;
   }
   const apiKey = await getEffectiveApiKey();
@@ -180,8 +164,9 @@ async function handleRewrite(request, sendResponse) {
     sendResponse({ error: 'No API key available.' });
     return;
   }
-  const usingBuiltIn = await isUsingBuiltInKey();
-  if (usingBuiltIn) await incrementUsage();
+  const usingBuiltIn = !(await (() => chrome.storage.local.get('apiKey'))().then(d => !!d.apiKey));
+  // Increment trial counter for built-in key users
+  if (!(await isLicenseActivated())) await incrementLicenseTrial();
   try {
     const result = await rewriteText(request.text, request.mode, apiKey);
     sendResponse(result);

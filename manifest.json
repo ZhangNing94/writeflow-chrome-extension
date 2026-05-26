@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "WriteFlow - AI Rewriting Assistant",
-  "version": "1.2.1",
-  "description": "One-click AI paraphrasing tool. Works instantly with built-in AI — no setup required. 3 free rewrites/day, unlimited with Pro.",
+  "version": "1.3.0",
+  "description": "AI-powered tool to rewrite, polish, expand, shorten and translate text directly in your browser.",
   "permissions": [
     "activeTab",
     "storage",

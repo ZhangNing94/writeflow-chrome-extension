@@ -27,7 +27,8 @@ function init() {
   const licenseMsg = document.getElementById('licenseMsg');
   const proUsageCount = document.getElementById('proUsageCount');
 
-  // Check pro status and show appropriate UI
+  // Init LicenseManager and check status
+  await LicenseManager.init();
   checkProAndShowUI();
 
   // Auto-fill selected text from active tab
@@ -84,41 +85,20 @@ function init() {
 
   // Pro section handlers
   upgradeProPopupBtn.addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'getGumroadUrl' }, resp => {
-      if (resp && resp.url) chrome.tabs.create({ url: resp.url });
-    });
+    chrome.tabs.create({ url: LICENSE_CONFIG.gumroadUrl });
   });
 
   activateBtn.addEventListener('click', async () => {
-    const code = licenseInput.value.trim().toUpperCase();
-    if (!code) {
-      showLicenseMsg(licenseMsg, 'Please enter your license key.', 'error');
-      return;
-    }
-    activateBtn.disabled = true;
-    activateBtn.textContent = 'Checking...';
-    try {
-      const resp = await chrome.runtime.sendMessage({ action: 'verifyLicense', code });
-      if (resp && resp.success) {
-        showLicenseMsg(licenseMsg, '✅ Pro activated! Unlimited rewrites unlocked.', 'success');
-        setTimeout(() => checkProAndShowUI(), 800);
-      } else {
-        showLicenseMsg(licenseMsg, resp.error || 'Invalid license key.', 'error');
-        activateBtn.disabled = false;
-        activateBtn.textContent = 'Activate';
-      }
-    } catch (e) {
-      showLicenseMsg(licenseMsg, 'Error: ' + e.message, 'error');
-      activateBtn.disabled = false;
-      activateBtn.textContent = 'Activate';
+    const success = await LicenseManager.showActivationDialog();
+    if (success) {
+      await LicenseManager.init();
+      checkProAndShowUI();
     }
   });
 
   // Upgrade modal handlers
   getProBtn.addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'getGumroadUrl' }, resp => {
-      if (resp && resp.url) chrome.tabs.create({ url: resp.url });
-    });
+    chrome.tabs.create({ url: LICENSE_CONFIG.gumroadUrl });
   });
   upgradeCloseBtn.addEventListener('click', () => upgradeModal.classList.add('hidden'));
   useOwnKey.addEventListener('click', (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(); });
@@ -128,9 +108,7 @@ function init() {
   const bannerUpgradeInit = document.getElementById('bannerUpgrade');
   const bannerDismissInit = document.getElementById('bannerDismiss');
   bannerUpgradeInit.addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'getGumroadUrl' }, resp => {
-      if (resp && resp.url) chrome.tabs.create({ url: resp.url });
-    });
+    chrome.tabs.create({ url: LICENSE_CONFIG.gumroadUrl });
   });
   bannerDismissInit.addEventListener('click', () => gentleBannerInit.classList.add('hidden'));
 }
@@ -141,31 +119,31 @@ function showLicenseMsg(el, msg, type) {
   setTimeout(() => { el.textContent = ''; el.className = 'license-msg'; }, 4000);
 }
 
-function checkProAndShowUI() {
+async function checkProAndShowUI() {
+  const status = LicenseManager.getStatus();
   const proFree = document.getElementById('proFree');
   const proActive = document.getElementById('proActive');
   const proUsageCount = document.getElementById('proUsageCount');
-  const rewriteBtn = document.getElementById('rewriteBtn');
 
-  chrome.storage.local.get(['isPro', 'usageCount', 'usageDate'], data => {
-    const today = new Date().toDateString();
-    const usage = data.usageDate === today ? (data.usageCount || 0) : 0;
+  if (status && status.activated) {
+    proFree.classList.add('hidden');
+    proActive.classList.remove('hidden');
+  } else {
+    proFree.classList.remove('hidden');
+    proActive.classList.add('hidden');
+    if (proUsageCount) {
+      const rem = status ? status.remaining : LICENSE_CONFIG.trialLimit;
+      proUsageCount.textContent = Math.max(0, rem);
+    }
+  }
 
-    if (data.isPro) {
-      proFree.classList.add('hidden');
-      proActive.classList.remove('hidden');
-    } else {
-      proFree.classList.remove('hidden');
-      proActive.classList.add('hidden');
-      if (proUsageCount) proUsageCount.textContent = usage;
-    }
-    // Also update usage badge if present
-    const usageBadge = document.getElementById('usageBadge');
-    if (usageBadge && !data.isPro) {
-      usageBadge.classList.remove('hidden');
-      document.getElementById('usageCount').textContent = usage;
-    }
-  });
+  // Update usage badge
+  const usageBadge = document.getElementById('usageBadge');
+  if (usageBadge && status && !status.activated) {
+    usageBadge.classList.remove('hidden');
+    document.getElementById('usageCount').textContent = LICENSE_CONFIG.trialLimit - Math.max(0, status.remaining);
+    document.getElementById('usageLimit').textContent = LICENSE_CONFIG.trialLimit;
+  }
 }
 
 
@@ -201,6 +179,13 @@ async function updateUsageDisplay() {
 
 async function doRewrite() {
   const inputText = document.getElementById('inputText').value.trim();
+
+  // License check
+  const ls = LicenseManager.getStatus();
+  if (ls && !ls.activated && ls.remaining <= 0) {
+    await LicenseManager.showActivationDialog();
+    return;
+  }
   const activeMode = document.querySelector('.mode-btn.active').dataset.mode;
   const rewriteBtn = document.getElementById('rewriteBtn');
   const errorMsg = document.getElementById('errorMsg');
@@ -351,7 +336,7 @@ async function copyResult() {
   try {
     await navigator.clipboard.writeText(text);
     const btn = document.getElementById('copyBtn');
-    btn.textContent = '✅ Copied';
+    btn.textContent = '�?Copied';
     setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
   } catch {
     document.getElementById('errorMsg').textContent = 'Copy failed';
