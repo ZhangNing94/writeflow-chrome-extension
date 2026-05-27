@@ -25,20 +25,13 @@ async function getEffectiveApiKey() {
 
 // --- License (Gumroad API + trial tracking) ---
 async function isLicenseActivated() {
-  const data = await chrome.storage.local.get('license_activated');
-  return !!data.license_activated;
+  const data = await chrome.storage.local.get('lm_activated');
+  return !!data.lm_activated;
 }
 
 async function getTrialCount() {
-  const data = await chrome.storage.local.get('license_trial_count');
-  return data.license_trial_count || 0;
-}
-
-async function incrementLicenseTrial() {
-  const data = await chrome.storage.local.get('license_trial_count');
-  const count = (data.license_trial_count || 0) + 1;
-  await chrome.storage.local.set({ license_trial_count: count });
-  return count;
+  const data = await chrome.storage.local.get('lm_trial_count');
+  return data.lm_trial_count || 0;
 }
 
 async function canRewrite() {
@@ -57,18 +50,30 @@ async function verifyLicenseCode(code) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formData.toString()
     });
-    if (!response.ok) return false;
+    if (!response.ok) return { success: false, error: 'Network error. Please try again.' };
     const data = await response.json();
-    if (!data.success) return false;
+    if (!data.success) return { success: false, error: 'Invalid license key. Please check and try again.' };
     // Refund detection
-    if (data.purchase && data.purchase.refunded) {
-      await chrome.storage.local.remove('license_activated');
-      return false;
+    if (data.purchase && (data.purchase.refunded || data.purchase.disputed || data.purchase.chargebacked)) {
+      await chrome.storage.local.remove('lm_activated');
+      return { success: false, error: 'This license has been refunded or canceled.' };
     }
-    await chrome.storage.local.set({ license_activated: true });
-    return true;
+    // Device limit: max 2 devices
+    if (data.uses !== undefined && data.uses >= 2) {
+      return { success: false, error: 'This license has already been used on 2 devices. Please purchase an additional license.' };
+    }
+    // Increment uses to record this device
+    try {
+      await fetch('https://api.gumroad.com/v2/licenses/increment_uses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+      });
+    } catch (e) { /* non-blocking */ }
+    await chrome.storage.local.set({ lm_activated: true, lm_license_key: code.trim() });
+    return { success: true };
   } catch (e) {
-    return false;
+    return { success: false, error: 'Network error. Please check your connection and try again.' };
   }
 }
 
@@ -100,14 +105,20 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         return;
       }
       const mode = data.lastMode || 'Simple';
-      if (!data.apiKey) await incrementLicenseTrial();
-
       chrome.tabs.sendMessage(tab.id, {
         action: 'showRewriting',
         text: info.selectionText
       });
       rewriteText(info.selectionText, mode, apiKey)
         .then(result => {
+          // Increment trial for built-in key users via context menu path
+          isLicenseActivated().then(activated => {
+            if (!activated) {
+              chrome.storage.local.get('lm_trial_count', d => {
+                chrome.storage.local.set({ lm_trial_count: (d.lm_trial_count || 0) + 1 });
+              });
+            }
+          });
           chrome.tabs.sendMessage(tab.id, {
             action: 'showRewriteResult',
             rewritten: result.rewritten,
@@ -139,12 +150,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
   if (request.action === 'verifyLicense') {
-    verifyLicenseCode(request.code).then(valid => {
-      if (valid) {
-        sendResponse({ success: true });
-      } else {
-        sendResponse({ success: false, error: 'Invalid license key or refund detected.' });
-      }
+    verifyLicenseCode(request.code).then(result => {
+      sendResponse(result);
     });
     return true;
   }
@@ -165,8 +172,6 @@ async function handleRewrite(request, sendResponse) {
     return;
   }
   const usingBuiltIn = !(await (() => chrome.storage.local.get('apiKey'))().then(d => !!d.apiKey));
-  // Increment trial counter for built-in key users
-  if (!(await isLicenseActivated())) await incrementLicenseTrial();
   try {
     const result = await rewriteText(request.text, request.mode, apiKey);
     sendResponse(result);

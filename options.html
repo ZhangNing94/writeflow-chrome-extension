@@ -8,26 +8,26 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; max-width: 480px; margin: 0 auto; }
     .header { margin-bottom: 24px; }
-    .logo { font-size: 22px; font-weight: 700; color: #10B981; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .logo-icon { background: #10B981; color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; }
+    .logo { font-size: 22px; font-weight: 700; color: #f97316; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .logo-icon { background: #f97316; color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; }
     .desc { font-size: 13px; color: #64748b; }
     .section { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
     .section-title { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 10px; }
-    .pro-badge { display: inline-block; background: #ecfdf5; color: #059669; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-left: 8px; }
+    .pro-badge { display: inline-block; background: #fff7ed; color: #ea580c; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-left: 8px; }
     label { display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; font-weight: 500; }
     input[type="password"], input[type="text"] { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; outline: none; font-family: monospace; letter-spacing: 0.5px; }
-    input[type="password"]:focus, input[type="text"]:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+    input[type="password"]:focus, input[type="text"]:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
     .hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
     .btn-row { display: flex; gap: 8px; margin-top: 12px; }
-    .btn-primary { padding: 8px 20px; background: #10B981; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-    .btn-primary:hover { background: #059669; }
+    .btn-primary { padding: 8px 20px; background: #f97316; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-primary:hover { background: #ea580c; }
     .btn-secondary { padding: 8px 20px; background: #fff; color: #475569; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; cursor: pointer; }
     .btn-secondary:hover { background: #f8fafc; }
     .status { font-size: 12px; margin-top: 8px; padding: 6px 10px; border-radius: 4px; display: none; }
-    .status.success { display: block; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .status.success { display: block; background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
     .status.error { display: block; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
     .how-to { font-size: 12px; color: #64748b; margin-top: 8px; }
-    .how-to a { color: #10B981; }
+    .how-to a { color: #f97316; }
     .pro-info { font-size: 12px; color: #64748b; margin-bottom: 8px; }
   </style>
 </head>
@@ -40,10 +40,10 @@
   <!-- Pro License Section -->
   <div id="proSection" class="section">
     <div class="section-title">Pro License</div>
-    <p class="pro-info" id="proStatusText">Free plan: 3 rewrites/day. Upgrade for unlimited access.</p>
-    <label for="licenseCode">License Code (6-digit PIN)</label>
-    <input type="text" id="licenseCode" placeholder="Enter 6-digit code" maxlength="6" autocomplete="off">
-    <p class="hint">Purchase from <a href="https://5330159977060.gumroad.com/l/xhzru" target="_blank">Gumroad</a> to get your license code</p>
+    <p class="pro-info" id="proStatusText">Free plan: 5 free rewrites total. Upgrade for unlimited access.</p>
+    <label for="licenseCode">License Key</label>
+    <input type="text" id="licenseCode" placeholder="Enter license key" maxlength="20" autocomplete="off">
+    <p class="hint">Purchase from <a href="https://5330159977060.gumroad.com/l/xl?wanted=true" target="_blank">Gumroad</a> to get your license key</p>
     <div class="btn-row">
       <button id="verifyBtn" class="btn-primary">Activate Pro</button>
       <button id="buyBtn" class="btn-secondary">Buy Pro - $4.99</button>
@@ -69,7 +69,7 @@
     <div class="section-title">How It Works</div>
     <p class="how-to">
       1. Install WriteFlow — works immediately with built-in AI<br>
-      2. Free plan: 3 rewrites per day, all 4 modes<br>
+      2. Free plan: 5 free rewrites total, all 4 modes<br>
       3. Pro plan: $4.99 one-time for unlimited rewrites<br>
       4. Or bring your own DeepSeek API Key for free unlimited use<br>
       5. Select text on any page, right-click &rarr; "Rewrite with WriteFlow"<br>

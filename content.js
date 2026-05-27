@@ -35,7 +35,7 @@ function showFloatingUI(state, text) {
   if (state === 'rewriting') {
     floatingEl.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span style="color:#10B981;font-weight:600;">WriteFlow</span>
+        <span style="color:#f97316;font-weight:600;">WriteFlow</span>
         <span style="color:#64748b;font-size:12px;">Rewriting...</span>
       </div>
       <div style="color:#94a3b8;font-size:12px;">${text.substring(0, 100)}${text.length > 100 ? '...' : ''}</div>
@@ -56,13 +56,13 @@ function updateFloatingUI(state, content, score) {
   } else {
     floatingEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="color:#10B981;font-weight:600;">Rewritten</span>
-        ${score !== undefined ? `<span style="font-size:11px;color:#10B981;font-weight:600;">Score: ${score}%</span>` : ''}
+        <span style="color:#f97316;font-weight:600;">Rewritten</span>
+        ${score !== undefined ? `<span style="font-size:11px;color:#f97316;font-weight:600;">Score: ${score}%</span>` : ''}
       </div>
       <div style="font-size:13px;line-height:1.5;color:#334155;white-space:pre-wrap;margin-bottom:8px;">${escapeHtml(content)}</div>
       <div style="display:flex;gap:6px;justify-content:flex-end;">
         <button id="wf-copy-btn" style="padding:4px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;color:#475569;cursor:pointer;">Copy</button>
-        <button id="wf-replace-btn" style="padding:4px 10px;font-size:11px;border:1px solid #10B981;border-radius:4px;background:#10B981;color:#fff;cursor:pointer;">Replace</button>
+        <button id="wf-replace-btn" style="padding:4px 10px;font-size:11px;border:1px solid #f97316;border-radius:4px;background:#f97316;color:#fff;cursor:pointer;">Replace</button>
         <button id="wf-close-btn" style="padding:4px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;color:#475569;cursor:pointer;">Close</button>
       </div>
     `;

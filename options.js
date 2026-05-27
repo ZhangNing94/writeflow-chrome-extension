@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isPro) {
       proBadge.classList.remove('hidden');
       proStatusText.textContent = 'Pro plan active — unlimited rewrites unlocked!';
-      proStatusText.style.color = '#059669';
+      proStatusText.style.color = '#ea580c';
       licenseCode.disabled = true;
       verifyBtn.disabled = true;
       verifyBtn.textContent = 'Activated';
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   clearBtn.addEventListener('click', () => {
     chrome.storage.local.remove('apiKey', () => {
       apiKeyInput.value = '';
-      showStatus(statusMsg, 'API Key removed. Switched to built-in AI (3/day limit).', 'success');
+      showStatus(statusMsg, 'API Key removed. Switched to built-in AI (5 free trials total).', 'success');
     });
   });
 
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
   verifyBtn.addEventListener('click', async () => {
     const code = licenseCode.value.trim();
     if (!code || code.length < 6) {
-      showStatus(licenseStatus, 'Please enter a valid 6-digit license code.', 'error');
+      showStatus(licenseStatus, 'Please enter a valid license key.', 'error');
       return;
     }
     verifyBtn.disabled = true;
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   buyBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'https://5330159977060.gumroad.com/l/xhzru' });
+    chrome.tabs.create({ url: window.LICENSE_CONFIG?.gumroadUrl || 'https://5330159977060.gumroad.com/l/xl?wanted=true' });
   });
 
   function showStatus(el, msg, type) {

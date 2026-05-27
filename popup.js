@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', init);
 const MAX_CHARS = 2000;
 const MAX_HISTORY = 5;
 
-function init() {
+async function init() {
   const inputText = document.getElementById('inputText');
   const rewriteBtn = document.getElementById('rewriteBtn');
   const clearBtn = document.getElementById('clearBtn');
@@ -228,7 +228,7 @@ async function doRewrite() {
     if (response.error === 'FREE_LIMIT' || response.error === 'FREE_LIMIT_UPSELL') {
       // Gentle banner instead of blocking modal (Issue #6)
       gentleBanner.classList.remove('hidden');
-      bannerText.textContent = 'You have used 3/3 free rewrites today. Want more?';
+      bannerText.textContent = `You have used ${LICENSE_CONFIG.trialLimit}/${LICENSE_CONFIG.trialLimit} free rewrites. Want more?`;
       return;
     }
 
@@ -240,6 +240,10 @@ async function doRewrite() {
 
     resultText.textContent = response.rewritten;
     resultSection.classList.remove('hidden');
+
+    // Increment trial count via LicenseManager (single writer for popup path)
+    const ls2 = LicenseManager.getStatus();
+    if (ls2 && !ls2.activated) await LicenseManager.incrementTrial();
 
     const score = calcHumanizedScore(response.rewritten);
     document.getElementById('scoreValue').textContent = `${score}%`;
