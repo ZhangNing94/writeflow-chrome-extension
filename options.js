@@ -10,10 +10,13 @@ function decodeB64(str) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const showApiKeyBtn = document.getElementById('showApiKeyBtn');
+  const apiKeyFields = document.getElementById('apiKeyFields');
   const apiKeyInput = document.getElementById('apiKey');
   const saveBtn = document.getElementById('saveBtn');
   const clearBtn = document.getElementById('clearBtn');
   const statusMsg = document.getElementById('statusMsg');
+  const apiKeyInfo = document.getElementById('apiKeyInfo');
   const licenseCode = document.getElementById('licenseCode');
   const verifyBtn = document.getElementById('verifyBtn');
   const buyBtn = document.getElementById('buyBtn');
@@ -23,8 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Init: load existing settings — decode stored key (base64)
   chrome.storage.local.get(['apiKey', 'isPro'], (data) => {
-    if (data.apiKey) apiKeyInput.value = decodeB64(data.apiKey);
     if (data.isPro) updateProUI(true);
+    if (data.apiKey) {
+      apiKeyFields.style.display = 'block';
+      apiKeyInput.value = decodeB64(data.apiKey);
+      apiKeyInfo.textContent = 'You are using your own API key. To switch back to the built-in key, remove it below.';
+      showApiKeyBtn.textContent = 'Using Custom Key';
+      showApiKeyBtn.style.borderColor = '#f97316';
+      showApiKeyBtn.style.color = '#f97316';
+    }
   });
 
   function updateProUI(isPro) {
@@ -38,6 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
       buyBtn.classList.add('hidden');
     }
   }
+
+  // Toggle custom API key fields
+  showApiKeyBtn.addEventListener('click', () => {
+    const isVisible = apiKeyFields.style.display === 'block';
+    apiKeyFields.style.display = isVisible ? 'none' : 'block';
+    showApiKeyBtn.textContent = isVisible ? 'Use My Own Key' : 'Hide';
+  });
 
   // API Key save — encode as base64 before storing
   saveBtn.addEventListener('click', () => {
@@ -53,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Encode as base64 before storing
     chrome.storage.local.set({ apiKey: encodeB64(key) }, () => {
       showStatus(statusMsg, 'API Key saved! Using your own key (unlimited).', 'success');
+      apiKeyInfo.textContent = 'You are using your own API key. To switch back to the built-in key, remove it below.';
     });
   });
 
@@ -60,6 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.remove('apiKey', () => {
       apiKeyInput.value = '';
       showStatus(statusMsg, 'API Key removed. Switched to built-in AI (5 free trials total).', 'success');
+      apiKeyInfo.textContent = 'WriteFlow comes with a built-in API key ready to use. If you have performance issues or want to use your own key, click below.';
+      apiKeyFields.style.display = 'none';
+      showApiKeyBtn.textContent = 'Use My Own Key';
     });
   });
 
