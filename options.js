@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   buyBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: window.LICENSE_CONFIG?.gumroadUrl || 'https://5330159977060.gumroad.com/l/xl' });
+    chrome.tabs.create({ url: window.LICENSE_CONFIG?.gumroadUrl || 'https://5330159977060.gumroad.com/l/xhzru' });
   });
 
   function showStatus(el, msg, type) {

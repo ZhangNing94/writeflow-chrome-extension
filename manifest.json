@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WriteFlow - AI Rewriting Assistant",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "AI-powered tool to rewrite, polish, expand, shorten and translate text directly in your browser.",
   "permissions": [
     "activeTab",

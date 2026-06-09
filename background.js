@@ -4,7 +4,7 @@
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const GUMROAD_API = 'https://api.gumroad.com/v2/licenses/verify';
 const FREE_TRIALS = 5;
-const PRODUCT_PERMALINK = 'xl';
+const PRODUCT_PERMALINK = 'xhzru';
 
 // --- Built-in API Key (base64 obfuscated) ---
 const BUILT_IN_KEY_B64 = 'c2stODc4Nzc1YmQtaXdXNHI5MXhBRGk3WktZVlQ4WDFZeTRjSGY2ZE9qbA==';
