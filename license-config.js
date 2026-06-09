@@ -7,5 +7,5 @@ window.LICENSE_CONFIG = {
   productPermalink: 'xl',
   trialLimit:       5,
   accentColor:      '#f97316',
-  gumroadUrl:       'https://5330159977060.gumroad.com/l/xl?wanted=true'
+  gumroadUrl:       'https://5330159977060.gumroad.com/l/xl'
 };
